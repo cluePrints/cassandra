@@ -54,7 +54,7 @@ public class CqlInserter extends Operation
         // Construct a query string once.
         if (cqlQuery == null)
         {
-            StringBuilder query = new StringBuilder("UPDATE ").append(wrapInQuotesIfRequired("Standard1"))
+            StringBuilder query = new StringBuilder("UPDATE ").append(wrapInQuotesIfRequired(session.getCfName()))
                     .append(" USING CONSISTENCY ")
                     .append(session.getConsistencyLevel().toString()).append(" SET ");
 

@@ -106,7 +106,7 @@ public class Reader extends Operation
 
     private void runColumnReader(SlicePredicate predicate, Cassandra.Client client) throws IOException
     {
-        ColumnParent parent = new ColumnParent("Standard1");
+        ColumnParent parent = new ColumnParent(session.getCfName());
 
         byte[] key = generateKey();
         ByteBuffer keyBuffer = ByteBuffer.wrap(key);

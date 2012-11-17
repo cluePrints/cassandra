@@ -67,7 +67,7 @@ public class CqlReader extends Operation
                 }
             }
 
-            query.append(" FROM ").append(wrapInQuotesIfRequired("Standard1")).append(" USING CONSISTENCY ")
+            query.append(" FROM ").append(wrapInQuotesIfRequired(session.getCfName())).append(" USING CONSISTENCY ")
                  .append(session.getConsistencyLevel().toString());
             query.append(" WHERE KEY=?");
 

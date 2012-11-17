@@ -94,7 +94,7 @@ public class MultiGetter extends Operation
         }
         else
         {
-            ColumnParent parent = new ColumnParent("Standard1");
+            ColumnParent parent = new ColumnParent(session.getCfName());
 
             List<ByteBuffer> keys = generateKeys(offset, offset + session.getKeysPerCall());
 

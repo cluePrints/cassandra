@@ -49,7 +49,12 @@ public class Session implements Serializable
     // command line options
     public static final Options availableOptions = new Options();
 
-    public static final String KEYSPACE_NAME = "Keyspace1";
+    public static final String DEFAULT_KEYSPACE = "Keyspace1";
+    public static final String DEFAULT_CF = "Standard1";
+    
+    private String cfName;
+    private String ksName;
+    
     public static final String DEFAULT_COMPARATOR = "AsciiType";
     public static final String DEFAULT_VALIDATOR  = "BytesType";
 
@@ -81,6 +86,7 @@ public class Session implements Serializable
         availableOptions.addOption("s",  "stdev",                true,   "Standard Deviation Factor, default:0.1");
         availableOptions.addOption("r",  "random",               false,  "Use random key generator (STDEV will have no effect), default:false");
         availableOptions.addOption("f",  "file",                 true,   "Write output to given file");
+        availableOptions.addOption("E",  "reuseExisting",        true,   "Keyspace.columnFamily to write the test against");
         availableOptions.addOption("p",  "port",                 true,   "Thrift port, default:9160");
         availableOptions.addOption("o",  "operation",            true,   "Operation to perform (INSERT, READ, RANGE_SLICE, INDEXED_RANGE_SLICE, MULTI_GET, COUNTER_ADD, COUNTER_GET), default:INSERT");
         availableOptions.addOption("u",  "supercolumns",         true,   "Number of super columns per key, default:1");
@@ -189,6 +195,18 @@ public class Session implements Serializable
             else
                 numDifferentKeys = numKeys;
 
+            if (cmd.hasOption("E"))
+            {
+            	String ksAndCf = cmd.getOptionValue("E");
+            	String[] ksAndCfArray = ksAndCf.split(":");
+            	ksName = ksAndCfArray[0];
+            	cfName = ksAndCfArray[1];
+            	if (reuseExisting())
+            	{
+            		System.out.printf("Will run test against %s:%s\n", ksName, cfName);
+            	}
+            }
+            
             if (cmd.hasOption("N"))
                 skipKeys = Float.parseFloat(cmd.getOptionValue("N"));
 
@@ -588,11 +606,14 @@ public class Session implements Serializable
      */
     public void createKeySpaces()
     {
+    	if (reuseExisting())
+    		return;
+    	
         KsDef keyspace = new KsDef();
         String defaultComparator = comparator == null ? DEFAULT_COMPARATOR : comparator;
 
         // column family for standard columns
-        CfDef standardCfDef = new CfDef(KEYSPACE_NAME, "Standard1");
+        CfDef standardCfDef = new CfDef(getKeyspaceName(), getCfName());
         Map<String, String> compressionOptions = new HashMap<String, String>();
         if (compression != null)
             compressionOptions.put("sstable_compression", compression);
@@ -617,27 +638,27 @@ public class Session implements Serializable
         }
 
         // column family with super columns
-        CfDef superCfDef = new CfDef(KEYSPACE_NAME, "Super1").setColumn_type("Super");
+        CfDef superCfDef = new CfDef(getKeyspaceName(), "Super1").setColumn_type("Super");
         superCfDef.setComparator_type(DEFAULT_COMPARATOR)
                   .setSubcomparator_type(defaultComparator)
                   .setDefault_validation_class(DEFAULT_VALIDATOR)
                   .setCompression_options(compressionOptions);
 
         // column family for standard counters
-        CfDef counterCfDef = new CfDef(KEYSPACE_NAME, "Counter1").setComparator_type(defaultComparator)
+        CfDef counterCfDef = new CfDef(getKeyspaceName(), "Counter1").setComparator_type(defaultComparator)
                                                                  .setComparator_type(defaultComparator)
                                                                  .setDefault_validation_class("CounterColumnType")
                                                                  .setReplicate_on_write(replicateOnWrite)
                                                                  .setCompression_options(compressionOptions);
 
         // column family with counter super columns
-        CfDef counterSuperCfDef = new CfDef(KEYSPACE_NAME, "SuperCounter1").setComparator_type(defaultComparator)
+        CfDef counterSuperCfDef = new CfDef(getKeyspaceName(), "SuperCounter1").setComparator_type(defaultComparator)
                                                                            .setDefault_validation_class("CounterColumnType")
                                                                            .setReplicate_on_write(replicateOnWrite)
                                                                            .setColumn_type("Super")
                                                                            .setCompression_options(compressionOptions);
 
-        keyspace.setName(KEYSPACE_NAME);
+        keyspace.setName(getKeyspaceName());
         keyspace.setStrategy_class(replicationStrategy);
 
         if (!replicationStrategyOptions.isEmpty())
@@ -664,7 +685,7 @@ public class Session implements Serializable
             /* CQL3 counter cf */
             client.set_cql_version("3.0.0"); // just to create counter cf for cql3
 
-            client.set_keyspace(KEYSPACE_NAME);
+            client.set_keyspace(getKeyspaceName());
             client.execute_cql_query(createCounterCFStatementForCQL3(), Compression.NONE);
 
             if (enable_cql)
@@ -683,6 +704,11 @@ public class Session implements Serializable
             System.err.println(e.getMessage());
         }
     }
+
+	private boolean reuseExisting() 
+	{
+		return ksName != null && cfName != null;
+	}
 
     /**
      * Thrift client connection with Keyspace1 set.
@@ -716,7 +742,7 @@ public class Session implements Serializable
 
             if (setKeyspace)
             {
-                client.set_keyspace("Keyspace1");
+                client.set_keyspace(getKeyspaceName());
             }
         }
         catch (InvalidRequestException e)
@@ -762,4 +788,14 @@ public class Session implements Serializable
 
         return ByteBufferUtil.bytes(counter3.toString());
     }
+
+    public String getCfName() 
+    {
+		return cfName != null ? cfName : DEFAULT_CF;
+	}
+    
+    public String getKeyspaceName() 
+    {
+		return reuseExisting() ? ksName : DEFAULT_KEYSPACE;
+	}
 }

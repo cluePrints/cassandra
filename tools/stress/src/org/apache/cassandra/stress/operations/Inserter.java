@@ -139,7 +139,7 @@ public class Inserter extends Operation
             mutations.add(new Mutation().setColumn_or_supercolumn(column));
         }
 
-        mutationMap.put("Standard1", mutations);
+        mutationMap.put(session.getCfName(), mutations);
 
         return mutationMap;
     }

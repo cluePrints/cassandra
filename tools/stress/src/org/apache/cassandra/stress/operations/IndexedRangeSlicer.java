@@ -47,7 +47,7 @@ public class IndexedRangeSlicer extends Operation
                                                                                       ByteBufferUtil.EMPTY_BYTE_BUFFER,
                                                                                       false, session.getColumnsPerKey()));
 
-        ColumnParent parent = new ColumnParent("Standard1");
+        ColumnParent parent = new ColumnParent(session.getCfName());
         int expectedPerValue = session.getNumKeys() / values.size();
 
         ByteBuffer columnName = ByteBufferUtil.bytes("C1");

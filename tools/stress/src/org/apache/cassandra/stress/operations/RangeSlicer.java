@@ -97,7 +97,7 @@ public class RangeSlicer extends Operation
         }
         else
         {
-            ColumnParent parent = new ColumnParent("Standard1");
+            ColumnParent parent = new ColumnParent(session.getCfName());
 
             ByteBuffer start = ByteBufferUtil.bytes(String.format(format, index));
 

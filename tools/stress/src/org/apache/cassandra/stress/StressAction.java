@@ -54,7 +54,8 @@ public class StressAction extends Thread
         int epoch, total, oldTotal, keyCount, oldKeyCount;
 
         // creating keyspace and column families
-        if (client.getOperation() == Stress.Operations.INSERT || client.getOperation() == Stress.Operations.COUNTER_ADD)
+        boolean isMutationOperation = client.getOperation() == Stress.Operations.INSERT || client.getOperation() == Stress.Operations.COUNTER_ADD;
+		if (isMutationOperation)
             client.createKeySpaces();
 
         int threadCount = client.getThreads();
