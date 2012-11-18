@@ -146,7 +146,7 @@ public class JMXEnabledThreadPoolExecutor extends DebuggableThreadPoolExecutor i
      */
     public long getPendingTasks()
     {
-        return getTaskCount() - getCompletedTaskCount();
+        return getQueue().size();
     }
 
     public int getTotalBlockedTasks()
